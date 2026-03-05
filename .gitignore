@@ -1,4 +1,4 @@
-# Secrets (ne jamais commiter)
+# Secrets 
 bootstrap/.argocd-credentials
 bootstrap/.argocd-ip
 
@@ -7,10 +7,8 @@ terraform/.terraform/
 terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
-terraform/terraform.tfvars     # contient subscription_id → jamais dans git
+terraform/terraform.tfvars     
 
-# Fichier Cortex client (contient distribution.id + dockerPullSecret)
-# Passé en paramètre : make up CORTEX_YAML=./client.values.yaml
 *.values.yaml
 
 # Kubeconfig locaux
