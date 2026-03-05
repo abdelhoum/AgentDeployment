@@ -1,14 +1,15 @@
-# Secrets 
+# Secrets runtime (générés par bootstrap.sh)
 bootstrap/.argocd-credentials
 bootstrap/.argocd-ip
 
-# Terraform
+# Terraform state local
 terraform/.terraform/
 terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
-terraform/terraform.tfvars     
 
+# Fichier Cortex client (distribution.id + dockerPullSecret)
+# Passé via : make up CORTEX_YAML=./client.values.yaml
 *.values.yaml
 
 # Kubeconfig locaux

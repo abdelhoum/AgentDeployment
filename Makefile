@@ -3,18 +3,31 @@
 RESOURCE_GROUP  := rg-cortex-demo
 TF_DIR          := terraform
 CORTEX_YAML     ?=
+SUBSCRIPTION_ID ?=
+
+# ─── Validation des paramètres ────────────────────────────────────────────────
+
+check-params:
+	@[ -n "$(SUBSCRIPTION_ID)" ] || \
+		(echo "" && \
+		 echo "❌  Paramètre manquant : SUBSCRIPTION_ID" && \
+		 echo "    Usage : make $(MAKECMDGOALS) SUBSCRIPTION_ID=xxxx-xxxx-xxxx ..." && \
+		 echo "" && exit 1)
+
+check-all: check-params
+	@[ -n "$(CORTEX_YAML)" ] || \
+		(echo "" && \
+		 echo "❌  Paramètre manquant : CORTEX_YAML" && \
+		 echo "    Usage : make up SUBSCRIPTION_ID=xxxx CORTEX_YAML=./client.values.yaml" && \
+		 echo "" && exit 1)
+	@[ -f "$(CORTEX_YAML)" ] || \
+		(echo "❌  Fichier introuvable : $(CORTEX_YAML)" && exit 1)
 
 # ─── Infrastructure complète ──────────────────────────────────────────────────
 
 ## Lance tout : terraform + bootstrap (ArgoCD + clusters + ApplicationSet)
-## Usage : make up CORTEX_YAML=./chemin/vers/client.values.yaml
-up: tf-apply
-	@[ -n "$(CORTEX_YAML)" ] || \
-		(echo "" && \
-		 echo "❌  Paramètre manquant : CORTEX_YAML" && \
-		 echo "    Usage : make up CORTEX_YAML=./chemin/vers/client.values.yaml" && \
-		 echo "" && \
-		 exit 1)
+## Usage : make up SUBSCRIPTION_ID=xxxx CORTEX_YAML=./client.values.yaml
+up: check-all tf-apply
 	@echo ""
 	@echo "Infrastructure créée. Lancement du bootstrap..."
 	@bash bootstrap/bootstrap.sh "$(CORTEX_YAML)"
@@ -23,7 +36,8 @@ up: tf-apply
 	@$(MAKE) status
 
 ## Détruit tout (clusters AKS + resource group)
-down: tf-destroy
+## Usage : make down SUBSCRIPTION_ID=xxxx
+down: check-params tf-destroy
 	@echo "✓ Infrastructure détruite."
 
 # ─── Terraform ────────────────────────────────────────────────────────────────
@@ -31,14 +45,14 @@ down: tf-destroy
 tf-init:
 	cd $(TF_DIR) && terraform init
 
-tf-plan: tf-init
-	cd $(TF_DIR) && terraform plan
+tf-plan: check-params tf-init
+	cd $(TF_DIR) && terraform plan -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 tf-apply: tf-init
-	cd $(TF_DIR) && terraform apply -auto-approve
+	cd $(TF_DIR) && terraform apply -auto-approve -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 tf-destroy:
-	cd $(TF_DIR) && terraform destroy -auto-approve
+	cd $(TF_DIR) && terraform destroy -auto-approve -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 # ─── Status ───────────────────────────────────────────────────────────────────
 
@@ -67,11 +81,11 @@ argocd:
 # ─── Aide ─────────────────────────────────────────────────────────────────────
 
 help:
-	@echo "Usage : make <cible>"
+	@echo "Usage : make <cible> SUBSCRIPTION_ID=xxxx [CORTEX_YAML=./client.values.yaml]"
 	@echo ""
 	@echo "Infrastructure :"
-	@echo "  up CORTEX_YAML=./client.values.yaml   Lance terraform + bootstrap"
-	@echo "  down                                   Détruit toute l'infrastructure"
+	@echo "  up   SUBSCRIPTION_ID=xxxx CORTEX_YAML=./client.values.yaml"
+	@echo "  down SUBSCRIPTION_ID=xxxx"
 	@echo ""
 	@echo "Suivi :"
 	@echo "  status           Pods cortex sur les 3 clusters"
@@ -79,6 +93,5 @@ help:
 	@echo "  argocd           Port-forward UI ArgoCD (localhost:8080)"
 	@echo ""
 	@echo "Terraform direct :"
-	@echo "  tf-plan          terraform plan"
-	@echo "  tf-apply         terraform apply"
-	@echo "  tf-destroy       terraform destroy"
+	@echo "  tf-plan  SUBSCRIPTION_ID=xxxx"
+	@echo "  tf-apply SUBSCRIPTION_ID=xxxx"
