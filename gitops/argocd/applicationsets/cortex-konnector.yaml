@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cortex-konnector
+  namespace: argocd
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            cortex-enabled: "true"
+        values:
+          # Récupère les annotations posées par le bootstrap script sur chaque cluster
+          distributionId: "{{metadata.annotations.cortex-distribution-id}}"
+          dockerPullSecret: "{{metadata.annotations.cortex-docker-pull-secret}}"
+
+  template:
+    metadata:
+      name: "cortex-konnector-{{name}}"
+    spec:
+      project: default
+
+      sources:
+        # Source 1 : repo Git — fournit values-base.yaml (valeurs communes)
+        - repoURL: https://github.com/abdelhoum/AgentDeployment
+          targetRevision: HEAD
+          ref: values
+
+        # Source 2 : Helm chart officiel Palo Alto
+        - repoURL: https://paloaltonetworks.github.io/cortex-cloud
+          chart: konnector
+          targetRevision: "1.0.24"
+          helm:
+            valueFiles:
+              - $values/gitops/cortex/values-base.yaml
+            parameters:
+              # Valeurs par cluster — injectées depuis les annotations ArgoCD
+              - name: distribution.id
+                value: "{{values.distributionId}}"
+              - name: dockerPullSecret
+                value: "{{values.dockerPullSecret}}"
+
+      destination:
+        server: "{{server}}"
+        namespace: panw
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

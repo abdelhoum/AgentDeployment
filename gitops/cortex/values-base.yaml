@@ -1,0 +1,31 @@
+image:
+  name: konnector-launcher
+  repository: europe-west4-docker.pkg.dev/xdr-eu-2003552879982/agent-docker
+  tag: v1.4.7
+  digest: ""
+
+namespace:
+  name: panw
+
+distribution:
+  # id : NE PAS METTRE ICI — injecté via l'annotation ArgoCD du cluster
+  # (lu par le bootstrap depuis le fichier Cortex .values.yaml, jamais dans git)
+  url: https://distributions.traps.paloaltonetworks.com
+
+optionalValues:
+  UPLOAD_LOG_LEVEL: "ERROR"
+  CONSOLE_LOG_LEVEL: "INFO"
+
+proxyValues:
+  httpProxy: ""
+  noProxy: "kubernetes,kubernetes.default.svc,.svc,.cluster.local"
+
+priorityClassValues:
+  enabled: true
+  classes:
+    critical:
+      name: "cortex-critical"
+      value: 100001000
+    high:
+      name: "cortex-high"
+      value: 100000000
