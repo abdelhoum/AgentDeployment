@@ -47,12 +47,15 @@ tf-init:
 	cd $(TF_DIR) && terraform init
 
 tf-plan: check-params tf-init
+	az account set --subscription $(SUBSCRIPTION_ID)
 	cd $(TF_DIR) && terraform plan -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 tf-apply: tf-init
+	az account set --subscription $(SUBSCRIPTION_ID)
 	cd $(TF_DIR) && terraform apply -auto-approve -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 tf-destroy:
+	az account set --subscription $(SUBSCRIPTION_ID)
 	cd $(TF_DIR) && terraform destroy -auto-approve -var="subscription_id=$(SUBSCRIPTION_ID)"
 
 # ─── Status ───────────────────────────────────────────────────────────────────
