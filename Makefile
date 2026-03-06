@@ -1,4 +1,5 @@
 .PHONY: up down status argocd argocd-status tf-plan tf-apply tf-destroy help
+SHELL := /bin/bash
 
 RESOURCE_GROUP  := rg-cortex-demo
 TF_DIR          := terraform
